@@ -1,6 +1,6 @@
 package br.com.neves.approvalflowapi.services;
 
-
+import br.com.neves.approvalflowapi.mensageria.SolicitacaoEventoPublisher;
 import br.com.neves.approvalflowapi.dto.AtualizarSolicitacaoRequestDTO;
 import br.com.neves.approvalflowapi.dto.CriarSolicitacaoRequestDTO;
 import br.com.neves.approvalflowapi.dto.SolicitacaoResponseDTO;
@@ -16,9 +16,14 @@ import java.util.List;
 public class SolicitacaoService {
 
     private final SolicitacaoRepository solicitacaoRepository;
+    private final SolicitacaoEventoPublisher solicitacaoEventoPublisher;
 
-    public SolicitacaoService(SolicitacaoRepository solicitacaoRepository) {
+    public SolicitacaoService(
+            SolicitacaoRepository solicitacaoRepository,
+            SolicitacaoEventoPublisher solicitacaoEventoPublisher
+    ) {
         this.solicitacaoRepository = solicitacaoRepository;
+        this.solicitacaoEventoPublisher = solicitacaoEventoPublisher;
     }
 
     public SolicitacaoResponseDTO criar(CriarSolicitacaoRequestDTO dto) {
@@ -70,7 +75,9 @@ public class SolicitacaoService {
 
         solicitacao.aprovar();
 
-        solicitacaoRepository.save(solicitacao);
+        Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
+
+        solicitacaoEventoPublisher.publicarSolicitacaoAprovada(solicitacaoSalva);
     }
 
     public void reprovar(Long id) {
@@ -78,7 +85,9 @@ public class SolicitacaoService {
 
         solicitacao.reprovar();
 
-        solicitacaoRepository.save(solicitacao);
+        Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
+
+        solicitacaoEventoPublisher.publicarSolicitacaoReprovada(solicitacaoSalva);
     }
 
     private Solicitacao buscarSolicitacaoPorId(Long id) {

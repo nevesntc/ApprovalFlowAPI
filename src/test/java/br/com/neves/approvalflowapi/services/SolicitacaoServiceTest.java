@@ -6,6 +6,7 @@ import br.com.neves.approvalflowapi.dto.SolicitacaoResponseDTO;
 import br.com.neves.approvalflowapi.entity.Solicitacao;
 import br.com.neves.approvalflowapi.entity.StatusSolicitacao;
 import br.com.neves.approvalflowapi.exception.RecursoNaoEncontradoException;
+import br.com.neves.approvalflowapi.mensageria.SolicitacaoEventoPublisher;
 import br.com.neves.approvalflowapi.repository.SolicitacaoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,9 @@ class SolicitacaoServiceTest {
 
     @Mock
     private SolicitacaoRepository solicitacaoRepository;
+
+    @Mock
+    private SolicitacaoEventoPublisher solicitacaoEventoPublisher;
 
     @InjectMocks
     private SolicitacaoService solicitacaoService;
@@ -213,12 +217,16 @@ class SolicitacaoServiceTest {
         given(solicitacaoRepository.findById(id))
                 .willReturn(Optional.of(solicitacao));
 
+        given(solicitacaoRepository.save(solicitacao))
+                .willReturn(solicitacao);
+
         solicitacaoService.aprovar(id);
 
         assertThat(solicitacao.getStatus()).isEqualTo(StatusSolicitacao.APROVADO);
 
         verify(solicitacaoRepository).findById(id);
         verify(solicitacaoRepository).save(solicitacao);
+        verify(solicitacaoEventoPublisher).publicarSolicitacaoAprovada(solicitacao);
     }
 
     @Test
@@ -256,12 +264,16 @@ class SolicitacaoServiceTest {
         given(solicitacaoRepository.findById(id))
                 .willReturn(Optional.of(solicitacao));
 
+        given(solicitacaoRepository.save(solicitacao))
+                .willReturn(solicitacao);
+
         solicitacaoService.reprovar(id);
 
         assertThat(solicitacao.getStatus()).isEqualTo(StatusSolicitacao.REJEITADO);
 
         verify(solicitacaoRepository).findById(id);
         verify(solicitacaoRepository).save(solicitacao);
+        verify(solicitacaoEventoPublisher).publicarSolicitacaoReprovada(solicitacao);
     }
 
     @Test
