@@ -475,9 +475,3 @@ Assim, consigo testar a lógica da aplicação sem depender de banco real ou Rab
 - Trocar H2 por SQL Server ou Oracle em ambiente externo
 - Adicionar testes de integração
 - Adicionar profiles para ambiente local, teste e produção
-
-## Autor
-
-Desenvolvido por Bruno Neves.
-
-GitHub: [@brunonevesyt](https://github.com/brunonevesyt)
