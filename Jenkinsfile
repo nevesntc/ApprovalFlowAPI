@@ -113,7 +113,7 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh 'sleep 25'
-                        sh 'curl -f http://localhost:8080/actuator/health'
+                        sh 'curl -f http://host.docker.internal:8080/actuator/health'
                     } else {
                         bat 'powershell -Command "Start-Sleep -Seconds 25; Invoke-WebRequest -Uri http://localhost:8080/actuator/health -UseBasicParsing"'
                     }
