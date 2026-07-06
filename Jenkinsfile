@@ -9,6 +9,10 @@ def executarComando(String comando) {
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
         APP_NAME = 'approval-flow-api'
         DOCKER_IMAGE = 'approval-flow-api'
@@ -17,7 +21,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Baixando código do repositório...'
+                echo 'Limpando workspace e baixando código do repositório...'
+
+                deleteDir()
+
                 checkout scm
             }
         }
@@ -33,6 +40,7 @@ pipeline {
                 }
 
                 executarComando('java -version')
+                executarComando('git --version')
             }
         }
 
@@ -104,10 +112,10 @@ pipeline {
 
                 script {
                     if (isUnix()) {
-                        sh 'sleep 20'
+                        sh 'sleep 25'
                         sh 'curl -f http://localhost:8080/actuator/health'
                     } else {
-                        bat 'powershell -Command "Start-Sleep -Seconds 20; Invoke-WebRequest -Uri http://localhost:8080/actuator/health -UseBasicParsing"'
+                        bat 'powershell -Command "Start-Sleep -Seconds 25; Invoke-WebRequest -Uri http://localhost:8080/actuator/health -UseBasicParsing"'
                     }
                 }
             }
