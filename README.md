@@ -19,13 +19,17 @@ Este projeto foi criado para praticar e demonstrar conhecimentos em:
 - Testes unitários com JUnit e Mockito
 - Swagger/OpenAPI
 - RabbitMQ
+- Docker
 - Docker Compose
+- GitHub Actions
+- Jenkins
+- CI/CD
 - Arquitetura em camadas
 
 ## Tecnologias utilizadas
 
 - Java 21
-- Spring Boot 3.5.13
+- Spring Boot 3.5.16
 - Maven
 - Spring Web
 - Spring Data JPA
@@ -35,7 +39,10 @@ Este projeto foi criado para praticar e demonstrar conhecimentos em:
 - Spring Boot Actuator
 - Spring AMQP
 - RabbitMQ
+- Docker
 - Docker Compose
+- GitHub Actions
+- Jenkins
 - JUnit 5
 - Mockito
 - AssertJ
@@ -81,6 +88,9 @@ src/main/java/br/com/neves/approvalflowapi
 - Padronizar respostas de erro
 - Documentar endpoints com Swagger
 - Testar regras de negócio com JUnit e Mockito
+- Executar a aplicação com Docker Compose
+- Validar build e testes com GitHub Actions
+- Simular pipeline CI/CD com Jenkins
 
 ## Regras de negócio
 
@@ -277,16 +287,28 @@ Antes de começar, é necessário ter instalado:
 ### Clonar o repositório
 
 ```bash
-git clone https://github.com/brunonevesyt/approval-flow-api.git
-cd approval-flow-api
+git clone https://github.com/nevesntc/ApprovalFlowAPI.git
+cd ApprovalFlowAPI
 ```
 
-### Subir o RabbitMQ
+### Rodar com Docker Compose
 
 Na raiz do projeto, execute:
 
 ```bash
-docker compose up -d
+docker compose up --build -d
+```
+
+Esse comando sobe:
+
+- API Spring Boot
+- RabbitMQ
+- Painel de gerenciamento do RabbitMQ
+
+A API ficará disponível em:
+
+```text
+http://localhost:8080
 ```
 
 O painel do RabbitMQ ficará disponível em:
@@ -302,7 +324,27 @@ Usuário: guest
 Senha: guest
 ```
 
-### Rodar a aplicação
+Para acompanhar os logs da API:
+
+```bash
+docker compose logs -f api
+```
+
+Para parar os containers:
+
+```bash
+docker compose down
+```
+
+### Rodar localmente com Maven
+
+Se quiser rodar a aplicação localmente, primeiro suba o RabbitMQ:
+
+```bash
+docker compose up -d rabbitmq
+```
+
+Depois execute a aplicação:
 
 ```bash
 mvn spring-boot:run
@@ -381,6 +423,18 @@ Os testes cobrem cenários como:
 - Publicar evento ao aprovar solicitação
 - Publicar evento ao reprovar solicitação
 
+## Profile de teste
+
+O projeto possui um profile específico para testes:
+
+```text
+src/test/resources/application-test.yml
+```
+
+Esse profile desativa os listeners do RabbitMQ durante a execução dos testes, evitando que os testes unitários dependam de um broker real rodando localmente.
+
+Também foram desativados alguns recursos desnecessários no contexto de teste, como Swagger e Open Session in View.
+
 ## Exemplo de erro padronizado
 
 Quando uma regra de negócio é violada, a API retorna uma resposta padronizada:
@@ -406,6 +460,74 @@ Exemplo de erro para recurso não encontrado:
   "caminho": "/api/solicitacoes/99"
 }
 ```
+
+## CI/CD
+
+O projeto possui validação automatizada com GitHub Actions e Jenkins.
+
+### GitHub Actions
+
+Foi criado um workflow de integração contínua para validar o projeto automaticamente a cada push ou pull request na branch `main`.
+
+Etapas executadas pelo GitHub Actions:
+
+```text
+Checkout do código
+Configuração do Java 21
+Execução dos testes
+Build Maven
+Build da imagem Docker
+```
+
+Esse fluxo garante que alterações no código sejam testadas e validadas automaticamente antes de evoluírem no repositório.
+
+### Jenkins
+
+Também foi criado um `Jenkinsfile` para simular um pipeline CI/CD mais próximo de um ambiente corporativo.
+
+Etapas executadas pelo Jenkins:
+
+```text
+Checkout do código
+Preparação do ambiente
+Execução dos testes unitários
+Build Maven
+Build da imagem Docker
+Deploy local com Docker Compose
+Health check da API
+```
+
+O pipeline sobe a API e o RabbitMQ via Docker Compose e valida automaticamente o endpoint de saúde da aplicação:
+
+```text
+http://host.docker.internal:8080/actuator/health
+```
+
+Resposta esperada:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+Esse fluxo demonstra conhecimentos em integração contínua, entrega contínua, Docker, Jenkins, testes automatizados e validação de saúde da aplicação.
+
+## Qualidade e segurança
+
+O projeto foi ajustado para usar versões mais recentes das dependências principais, reduzindo alertas de segurança apontados pela IDE.
+
+Também foi removida dependência desnecessária de testes e criado um profile específico para testes, evitando dependência direta de serviços externos durante a execução do `mvn test`.
+
+Pontos aplicados:
+
+- Atualização do Spring Boot para versão mais recente da linha 3.5.x.
+- Remoção de dependências desnecessárias.
+- Override de dependência transitiva vulnerável quando necessário.
+- Criação de profile de teste.
+- Validação automatizada com GitHub Actions.
+- Validação automatizada com Jenkins.
+- Health check automatizado após deploy local com Docker Compose.
 
 ## Decisões técnicas
 
@@ -437,6 +559,19 @@ A mensageria foi adicionada para demonstrar comunicação assíncrona.
 
 A API não precisa executar todos os processos imediatamente na mesma requisição. Ela altera o status da solicitação e publica um evento para que outro componente possa processar depois.
 
+### Docker
+
+O projeto possui `Dockerfile` para gerar a imagem da API e `docker-compose.yml` para subir a API junto com o RabbitMQ.
+
+Isso facilita a execução do ambiente completo com apenas um comando.
+
+### CI/CD
+
+Foram criados dois fluxos de automação:
+
+- GitHub Actions para integração contínua a cada alteração na branch `main`.
+- Jenkinsfile para simular um pipeline corporativo com build, testes, Docker, deploy local e health check.
+
 ## Como explicar este projeto
 
 Resumo técnico:
@@ -445,7 +580,7 @@ Resumo técnico:
 Este projeto é uma API REST em Java com Spring Boot para gerenciar solicitações internas.
 A aplicação segue arquitetura em camadas, usando Controller, Service, Repository, DTO e Entity.
 As regras de negócio ficam protegidas na entidade Solicitacao.
-Também implementei validações, tratamento global de exceções, documentação com Swagger, testes unitários com JUnit e Mockito e mensageria com RabbitMQ para publicar eventos quando uma solicitação é aprovada ou reprovada.
+Também implementei validações, tratamento global de exceções, documentação com Swagger, testes unitários com JUnit e Mockito, mensageria com RabbitMQ, Docker, GitHub Actions e Jenkins CI/CD.
 ```
 
 Resumo sobre mensageria:
@@ -462,37 +597,28 @@ Resumo sobre testes:
 Os testes unitários validam as principais regras de negócio do service, usando Mockito para mockar o repository e o publisher de eventos.
 Assim, consigo testar a lógica da aplicação sem depender de banco real ou RabbitMQ rodando.
 ```
-## CI/CD
 
-O projeto possui validação automatizada com GitHub Actions e Jenkins.
-
-### GitHub Actions
-
-O workflow de GitHub Actions executa automaticamente a cada push ou pull request na branch `main`.
-
-Etapas executadas:
+Resumo sobre Docker:
 
 ```text
-Checkout do código
-Configuração do Java 21
-Execução dos testes
-Build Maven
-Build da imagem Docker
+Dockerizei a aplicação usando um Dockerfile multi-stage com Java 21.
+Também configurei Docker Compose para subir a API e o RabbitMQ juntos, facilitando a execução do ambiente completo localmente.
+```
 
-Esse fluxo garante que alterações no código sejam validadas automaticamente antes de evoluírem no repositório.
+Resumo sobre CI/CD:
 
-Jenkins
+```text
+Configurei GitHub Actions para rodar testes, build Maven e build Docker a cada push na branch main.
+Também criei um Jenkinsfile com stages de checkout, preparação do ambiente, testes, build Maven, Docker build, deploy local com Docker Compose e health check automatizado.
+```
 
-Também foi criado um Jenkinsfile para simular um pipeline CI/CD mais próximo de um ambiente corporativo.
+## Próximas melhorias
 
-Etapas do pipeline Jenkins:
-
-Checkout do código
-Preparação do ambiente
-Execução dos testes unitários
-Build Maven
-Build da imagem Docker
-Deploy local com Docker Compose
-Health check da API
-
-O pipeline sobe a API e o RabbitMQ via Docker Compose e valida automaticamente o endpoint:
+- Criar frontend em Angular
+- Criar autenticação com JWT
+- Criar tabela de histórico/auditoria
+- Persistir eventos processados
+- Publicar aplicação em ambiente de nuvem
+- Trocar H2 por SQL Server ou Oracle em ambiente externo
+- Adicionar testes de integração
+- Adicionar profiles para ambiente local, teste e produção
