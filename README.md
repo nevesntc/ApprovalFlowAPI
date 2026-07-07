@@ -462,16 +462,37 @@ Resumo sobre testes:
 Os testes unitários validam as principais regras de negócio do service, usando Mockito para mockar o repository e o publisher de eventos.
 Assim, consigo testar a lógica da aplicação sem depender de banco real ou RabbitMQ rodando.
 ```
+## CI/CD
 
-## Próximas melhorias
+O projeto possui validação automatizada com GitHub Actions e Jenkins.
 
-- Criar frontend em Angular
-- Criar autenticação com JWT
-- Criar tabela de histórico/auditoria
-- Persistir eventos processados
-- Adicionar Dockerfile da API
-- Criar pipeline CI/CD com Jenkins
-- Publicar aplicação em ambiente de nuvem
-- Trocar H2 por SQL Server ou Oracle em ambiente externo
-- Adicionar testes de integração
-- Adicionar profiles para ambiente local, teste e produção
+### GitHub Actions
+
+O workflow de GitHub Actions executa automaticamente a cada push ou pull request na branch `main`.
+
+Etapas executadas:
+
+```text
+Checkout do código
+Configuração do Java 21
+Execução dos testes
+Build Maven
+Build da imagem Docker
+
+Esse fluxo garante que alterações no código sejam validadas automaticamente antes de evoluírem no repositório.
+
+Jenkins
+
+Também foi criado um Jenkinsfile para simular um pipeline CI/CD mais próximo de um ambiente corporativo.
+
+Etapas do pipeline Jenkins:
+
+Checkout do código
+Preparação do ambiente
+Execução dos testes unitários
+Build Maven
+Build da imagem Docker
+Deploy local com Docker Compose
+Health check da API
+
+O pipeline sobe a API e o RabbitMQ via Docker Compose e valida automaticamente o endpoint:
